@@ -9,6 +9,7 @@ import { MobileControls } from "./ui/MobileControls";
 import { SimulationParams, defaultParams } from "./params/simulationParams";
 import { PrizeFactory } from "./prize/PrizeFactory";
 import { ColliderDebug } from "./debug/ColliderDebug";
+import { getRandomBlueprint } from "./prize/PrizeLoader";
 
 export class GameManager {
   physicsWorld: PhysicsWorld;
@@ -98,7 +99,12 @@ export class GameManager {
       this.physicsWorld.removeBody("prize_bear");
     }
     this.sceneManager.removeMesh("prize_bear");
-    PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass);
+    const blueprint = getRandomBlueprint();
+    if (blueprint) {
+      PrizeFactory.createFromBlueprint(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, blueprint);
+    } else {
+      PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass);
+    }
   }
 
   private revertPrize(): void {

@@ -5,6 +5,7 @@ import { SceneManager } from "./rendering/SceneManager";
 import { SyncSystem } from "./rendering/SyncSystem";
 import { SimulationParams } from "./params/simulationParams";
 import { PrizeFactory } from "./prize/PrizeFactory";
+import { getRandomBlueprint } from "./prize/PrizeLoader";
 
 const W = 0.85 * 1.5;
 const D = 0.85 * 1.5;
@@ -277,6 +278,11 @@ export class StageManager {
     syncSystem: SyncSystem,
     mass: number,
   ): void {
-    PrizeFactory.create(physicsWorld, sceneManager, syncSystem, mass);
+    const blueprint = getRandomBlueprint();
+    if (blueprint) {
+      PrizeFactory.createFromBlueprint(physicsWorld, sceneManager, syncSystem, mass, blueprint);
+    } else {
+      PrizeFactory.create(physicsWorld, sceneManager, syncSystem, mass);
+    }
   }
 }

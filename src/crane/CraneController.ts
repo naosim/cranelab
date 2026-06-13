@@ -12,6 +12,8 @@ const ARM_HALF_W = 0.02;
 const CLAW_HALF_W = 0.02;
 const MOVE_SPEED = 0.5;
 
+const INITIAL_ARM_Y = 1.4;
+
 const CLAMP_MIN = { x: -0.85 * 1.5, y: 0.08, z: -0.85 * 1.5 };
 const CLAMP_MAX = { x: 0.85 * 1.5, y: 1.4, z: 2.0 };
 
@@ -50,7 +52,7 @@ export class CraneController {
   private headBody!: RAPIER.RigidBody;
   private arms: ArmData[] = [];
 
-  private targetPos = { x: 0, y: 1.1, z: DROP_POS.z };
+  private targetPos = { x: 0, y: INITIAL_ARM_Y, z: DROP_POS.z };
   private currentOpenRatio = 1;
 
   private maxCloseAngle: number;
@@ -402,7 +404,7 @@ export class CraneController {
     this.debugLogTimer = 0;
     this.currentOpenRatio = 1;
     this.targetPos.x = 0;
-    this.targetPos.y = 1.1;
+    this.targetPos.y = INITIAL_ARM_Y;
     this.targetPos.z = DROP_POS.z;
     this.headBody.setNextKinematicTranslation(this.targetPos);
     const range = this.maxOpeningAngle - this.maxCloseAngle;
@@ -570,8 +572,8 @@ export class CraneController {
 
       case AutoState.ASCENDING:
         this.targetPos.y += MOVE_SPEED * dt;
-        if (this.targetPos.y >= CLAMP_MAX.y) {
-          this.targetPos.y = CLAMP_MAX.y;
+        if (this.targetPos.y >= INITIAL_ARM_Y) {
+          this.targetPos.y = INITIAL_ARM_Y;
           this.autoState = AutoState.MOVING_OUT;
           this.autoTimer = 0;
         }
