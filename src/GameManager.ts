@@ -23,6 +23,8 @@ export class GameManager {
   private pendingParams: SimulationParams | null = null;
   private savedState: { t: { x: number; y: number; z: number }; r: { x: number; y: number; z: number; w: number } } | null = null;
   private coordEl: HTMLDivElement;
+  private cameraModeEl: HTMLDivElement | null = null;
+  private cameraTargetMode: 'origin' | 'arm' | 'prize' = 'origin';
 
   constructor(container: HTMLElement) {
     const saved = localStorage.getItem("craneParams");
@@ -44,6 +46,7 @@ export class GameManager {
     this.coordEl = this.addCoordDisplay();
     this.addResetButton();
     this.addRevertButton();
+    this.addCameraTargetButton();
   }
 
   private addCoordDisplay(): HTMLDivElement {
@@ -89,6 +92,46 @@ export class GameManager {
     btn.addEventListener("mouseleave", () => { btn.style.background = "rgba(200,160,60,0.25)"; });
     btn.addEventListener("click", () => this.revertPrize());
     document.body.appendChild(btn);
+  }
+
+  private addCameraTargetButton(): void {
+    this.cameraModeEl = document.createElement("div");
+    this.cameraModeEl.style.cssText = `
+      position: fixed; top: 132px; right: 16px; z-index: 90;
+      padding: 4px 10px; border-radius: 4px;
+      background: rgba(0,0,0,0.45); color: #8cf;
+      font: 12px/1.4 'Segoe UI', sans-serif;
+      text-align: right; min-width: 60px;
+    `;
+    this.updateCameraModeLabel();
+    document.body.appendChild(this.cameraModeEl);
+
+    const btn = document.createElement("button");
+    btn.textContent = "視点";
+    btn.style.cssText = `
+      position: fixed; top: 156px; right: 16px; z-index: 90;
+      padding: 8px 14px; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; background: rgba(100,100,200,0.25);
+      color: #aac; font-size: 13px; font-family: 'Segoe UI', sans-serif;
+      cursor: pointer; backdrop-filter: blur(4px); transition: background 0.15s;
+    `;
+    btn.addEventListener("mouseenter", () => { btn.style.background = "rgba(100,100,200,0.4)"; });
+    btn.addEventListener("mouseleave", () => { btn.style.background = "rgba(100,100,200,0.25)"; });
+    btn.addEventListener("click", () => this.cycleCameraTargetMode());
+    document.body.appendChild(btn);
+  }
+
+  private cycleCameraTargetMode(): void {
+    const modes: ('origin' | 'arm' | 'prize')[] = ['origin', 'arm', 'prize'];
+    const currentIndex = modes.indexOf(this.cameraTargetMode);
+    this.cameraTargetMode = modes[(currentIndex + 1) % modes.length];
+    this.updateCameraModeLabel();
+  }
+
+  private updateCameraModeLabel(): void {
+    if (!this.cameraModeEl) return;
+    const labels = { origin: '原点', arm: 'アーム', prize: '景品' };
+    this.cameraModeEl.textContent = `視点: ${labels[this.cameraTargetMode]}`;
   }
 
   private resetPrize(): void {
@@ -158,6 +201,35 @@ export class GameManager {
     this.physicsWorld.step();
     this.syncSystem.sync();
     this.colliderDebug.update(this.physicsWorld.world);
+    this.updateCameraTarget();
     this.sceneManager.render();
+  }
+
+  private updateCameraTarget(): void {
+    let targetX = 0, targetY = 0.5, targetZ = 0;
+    
+    switch (this.cameraTargetMode) {
+      case 'origin':
+        targetX = 0; targetY = 0.5; targetZ = 0;
+        break;
+      case 'arm': {
+        const head = this.physicsWorld.getBody("crane_head");
+        if (head) {
+          const t = head.translation();
+          targetX = t.x; targetY = t.y; targetZ = t.z;
+        }
+        break;
+      }
+      case 'prize': {
+        const prize = this.physicsWorld.getBody("prize_bear");
+        if (prize) {
+          const t = prize.translation();
+          targetX = t.x; targetY = t.y; targetZ = t.z;
+        }
+        break;
+      }
+    }
+    
+    this.sceneManager.controls.target.set(targetX, targetY, targetZ);
   }
 }
