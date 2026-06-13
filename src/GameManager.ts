@@ -20,6 +20,8 @@ export class GameManager {
   colliderDebug: ColliderDebug;
   params: SimulationParams;
   private pendingParams: SimulationParams | null = null;
+  private savedState: { t: { x: number; y: number; z: number }; r: { x: number; y: number; z: number; w: number } } | null = null;
+  private coordEl: HTMLDivElement;
 
   constructor(container: HTMLElement) {
     const saved = localStorage.getItem("craneParams");
@@ -38,7 +40,22 @@ export class GameManager {
     new MobileControls(this.inputManager);
     this.colliderDebug = new ColliderDebug(this.sceneManager.scene);
     new ControlPanel(this.params, (p) => this.onParamsChanged(p));
+    this.coordEl = this.addCoordDisplay();
     this.addResetButton();
+    this.addRevertButton();
+  }
+
+  private addCoordDisplay(): HTMLDivElement {
+    const el = document.createElement("div");
+    el.style.cssText = `
+      position: fixed; top: 92px; right: 16px; z-index: 90;
+      padding: 4px 10px; border-radius: 4px;
+      background: rgba(0,0,0,0.45); color: #8cf;
+      font: 13px/1.4 monospace;
+    `;
+    el.textContent = "X 0.00  Y 0.00  Z 0.00";
+    document.body.appendChild(el);
+    return el;
   }
 
   private addResetButton(): void {
@@ -57,7 +74,24 @@ export class GameManager {
     document.body.appendChild(btn);
   }
 
+  private addRevertButton(): void {
+    const btn = document.createElement("button");
+    btn.textContent = "戻す";
+    btn.style.cssText = `
+      position: fixed; top: 52px; right: 16px; z-index: 90;
+      padding: 8px 14px; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; background: rgba(200,160,60,0.25);
+      color: #ec8; font-size: 13px; font-family: 'Segoe UI', sans-serif;
+      cursor: pointer; backdrop-filter: blur(4px); transition: background 0.15s;
+    `;
+    btn.addEventListener("mouseenter", () => { btn.style.background = "rgba(200,160,60,0.4)"; });
+    btn.addEventListener("mouseleave", () => { btn.style.background = "rgba(200,160,60,0.25)"; });
+    btn.addEventListener("click", () => this.revertPrize());
+    document.body.appendChild(btn);
+  }
+
   private resetPrize(): void {
+    this.savedState = null;
     const oldBody = this.physicsWorld.getBody("prize_bear");
     if (oldBody) {
       this.syncSystem.removePair(oldBody);
@@ -65,6 +99,17 @@ export class GameManager {
     }
     this.sceneManager.removeMesh("prize_bear");
     PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass);
+  }
+
+  private revertPrize(): void {
+    if (!this.savedState) return;
+    const body = this.physicsWorld.getBody("prize_bear");
+    if (!body) return;
+    body.setTranslation(this.savedState.t, true);
+    body.setRotation(this.savedState.r, true);
+    body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    this.craneController.resetToIdle();
   }
 
   private onParamsChanged(p: SimulationParams): void {
@@ -85,8 +130,25 @@ export class GameManager {
       }
     }
     const input = this.inputManager.getState();
+    if (input.actionTrigger) {
+      const body = this.physicsWorld.getBody("prize_bear");
+      if (body) {
+        const st = body.translation();
+        const sr = body.rotation();
+        this.savedState = {
+          t: { x: st.x, y: st.y, z: st.z },
+          r: { x: sr.x, y: sr.y, z: sr.z, w: sr.w },
+        };
+      }
+    }
     if (input.colliderDebugTrigger) this.colliderDebug.toggle();
     this.craneController.update(dt, input);
+
+    const head = this.physicsWorld.getBody("crane_head");
+    if (head) {
+      const t = head.translation();
+      this.coordEl.textContent = `X ${t.x.toFixed(2)}  Y ${t.y.toFixed(2)}  Z ${t.z.toFixed(2)}`;
+    }
     this.physicsWorld.step();
     this.syncSystem.sync();
     this.colliderDebug.update(this.physicsWorld.world);

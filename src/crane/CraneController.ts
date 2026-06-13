@@ -13,9 +13,9 @@ const CLAW_HALF_W = 0.02;
 const MOVE_SPEED = 0.5;
 
 const CLAMP_MIN = { x: -0.85 * 1.5, y: 0.08, z: -0.85 * 1.5 };
-const CLAMP_MAX = { x: 0.85 * 1.5, y: 1.4, z: 1.3 };
+const CLAMP_MAX = { x: 0.85 * 1.5, y: 1.4, z: 2.0 };
 
-const DROP_POS = { x: 0, z: 1.2 };
+const DROP_POS = { x: 0, z: 1.6 };
 const DROP_DELTA_Y = 0.15;
 
 const GROUP_ARM = 1;
@@ -391,6 +391,25 @@ export class CraneController {
     if (!found) this.physicsWorld.world.contactPairsWith(arm.forearmCollider, check);
     if (!found) this.physicsWorld.world.contactPairsWith(arm.clawCollider, check);
     return found;
+  }
+
+  resetToIdle(): void {
+    this.autoState = AutoState.IDLE;
+    this.autoTimer = 0;
+    this.contactStartY = 0;
+    this.fanfarePlayed = false;
+    this.openingPrizeY = 0;
+    this.debugLogTimer = 0;
+    this.currentOpenRatio = 1;
+    this.targetPos.x = 0;
+    this.targetPos.y = 1.1;
+    this.targetPos.z = DROP_POS.z;
+    this.headBody.setNextKinematicTranslation(this.targetPos);
+    const range = this.maxOpeningAngle - this.maxCloseAngle;
+    const targetAngle = this.maxCloseAngle + range;
+    for (const arm of this.arms) {
+      arm.joint.configureMotor(targetAngle, 0, this.holdTorque, 5.0);
+    }
   }
 
   update(dt: number, input: InputState): void {
