@@ -231,7 +231,7 @@ export class PrizeFactory {
     tagRy: number,
   ): void {
     const hexR = 0.05 * S;
-    const halfThick = 0.005;
+    const halfThick = 0.01;
     const halfLen = hexR * 0.5;
     const _v3 = new THREE.Vector3();
     const _q = new THREE.Quaternion();
@@ -256,7 +256,7 @@ export class PrizeFactory {
         RAPIER.ColliderDesc.cuboid(halfLen, halfThick, halfThick)
           .setTranslation(rp.x + tagPx, tagPy, rp.z + tagPz)
           .setRotation({ x: rQ.x, y: rQ.y, z: rQ.z, w: rQ.w })
-          .setFriction(1.0)
+          .setFriction(2.0)
           .setDensity(LO_DENSITY)
           .setCollisionGroups(PRIZE_COLLISION_GROUPS),
         body,
