@@ -18,11 +18,46 @@ const CLAMP_MIN = { x: -0.85 * 1.5, y: 0.08, z: -0.85 * 1.5 };
 const CLAMP_MAX = { x: 0.85 * 1.5, y: 1.4, z: 2.0 };
 
 const DROP_POS = { x: 0, z: 1.6 };
-const DROP_DELTA_Y = 0.15;
 
 const GROUP_ARM = 1;
 const GROUP_PRIZE = 1 << 1;
 const ARM_COLLISION_GROUPS = (GROUP_PRIZE << 16) | GROUP_ARM;
+
+// ドロップゾーン検知システム
+export class DropZoneDetector {
+  private prizeBody: RAPIER.RigidBody | null = null;
+  private wasInZonePreviousFrame = false;
+  
+  constructor(
+    prizeBody: RAPIER.RigidBody | null,
+  ) {
+    this.prizeBody = prizeBody;
+  }
+  
+  public update(prizeBody: RAPIER.RigidBody | null): boolean {
+    this.prizeBody = prizeBody;
+    
+    if (!this.prizeBody) return false;
+    
+    const prizePos = this.prizeBody.translation();
+    const prizeFeetY = prizePos.y - 0.05;
+    
+    const dx = DROP_ZONE_CENTER.z - prizePos.z;
+    const dy = DROP_ZONE_CENTER.y - prizeFeetY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    const isCurrentlyInZone = distance <= DROP_ZONE_RADIUS;
+    
+    const justEntered = isCurrentlyInZone && !this.wasInZonePreviousFrame;
+    
+    this.wasInZonePreviousFrame = isCurrentlyInZone;
+    
+    return justEntered;
+  }
+}
+
+const DROP_ZONE_RADIUS = 0.1;
+const DROP_ZONE_CENTER = { x: 0, y: -0.01, z: 1.6 };  // ドロップゾーンの座標
 
 const enum AutoState {
   IDLE,
@@ -81,7 +116,9 @@ export class CraneController {
   private fanfarePlayed = false;
   private openingPrizeY = 0;
   private debugLogTimer = 0;
-
+  
+  private dropZoneDetectors: DropZoneDetector[] = [];
+  
   constructor(
     physicsWorld: PhysicsWorld,
     sceneManager: SceneManager,
@@ -107,6 +144,8 @@ export class CraneController {
 
     this.createHead(physicsWorld, sceneManager, syncSystem);
     this.createArms(physicsWorld, sceneManager, syncSystem);
+    
+    this.createDropZoneDetector(physicsWorld);
   }
 
   private createHead(
@@ -149,6 +188,12 @@ export class CraneController {
     pivot.add(ring);
   }
 
+  private createDropZoneDetector(physicsWorld: PhysicsWorld): void {
+    const prizeBody = physicsWorld.getBody("prize_bear") || null;
+    const detector = new DropZoneDetector(prizeBody);
+    this.dropZoneDetectors.push(detector);
+  }
+  
   private createArms(
     physicsWorld: PhysicsWorld,
     sceneManager: SceneManager,
@@ -475,8 +520,17 @@ export class CraneController {
           this.debugLogTimer -= dt;
           console.log("prize y", pos.y.toFixed(4), "openingY", this.openingPrizeY.toFixed(4), "drop", (this.openingPrizeY - pos.y).toFixed(4));
         }
-        if (!this.fanfarePlayed && this.openingPrizeY > 0 && this.openingPrizeY - pos.y > DROP_DELTA_Y) {
-          console.log("FANFARE TRIGGER! dropped", (this.openingPrizeY - pos.y).toFixed(4));
+        
+        let prizeEnteredDropZone = false;
+        for (const detector of this.dropZoneDetectors) {
+          if (detector.update(prizeBody)) {
+            prizeEnteredDropZone = true;
+            console.log("FANFARE TRIGGER! prize entered drop zone", pos.toString());
+            break;
+          }
+        }
+        
+        if (!this.fanfarePlayed && prizeEnteredDropZone && this.openingPrizeY > 0) {
           this.audio.fanfare();
           this.fanfarePlayed = true;
           this.debugLogTimer = 0;
