@@ -29,6 +29,7 @@ const SLIDERS: SliderDef[] = [
 
 const TOGGLES: { key: ParamKey; label: string }[] = [
   { key: "collisionLimitEnabled", label: "衝突制限" },
+  { key: "lightweight", label: "軽量化" },
 ];
 
 export class ControlPanel {

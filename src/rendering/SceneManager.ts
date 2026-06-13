@@ -7,14 +7,15 @@ export class SceneManager {
   renderer: THREE.WebGLRenderer;
   controls: OrbitControls;
   private meshes = new Map<string, THREE.Object3D>();
+  private dirLight!: THREE.DirectionalLight;
 
   constructor(container: HTMLElement) {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x222233);
 
     this.camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 50);
-    this.camera.position.set(0, 1.2, 3.5);
-    this.camera.lookAt(0, 0.4, 0);
+    this.camera.position.set(0, 1.4, 4.5);
+    this.camera.lookAt(0, 0.5, 0);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -23,7 +24,7 @@ export class SceneManager {
     container.appendChild(this.renderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.target.set(0, 0.4, 0);
+    this.controls.target.set(0, 0.5, 0);
     this.controls.update();
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.12;
@@ -41,10 +42,10 @@ export class SceneManager {
     const ambient = new THREE.AmbientLight(0x404060, 0.8);
     this.scene.add(ambient);
 
-    const dir = new THREE.DirectionalLight(0xffffff, 2.5);
-    dir.position.set(0, 5, 0);
-    dir.castShadow = true;
-    this.scene.add(dir);
+    this.dirLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    this.dirLight.position.set(0, 5, 0);
+    this.dirLight.castShadow = true;
+    this.scene.add(this.dirLight);
 
     const warm = new THREE.DirectionalLight(0xffcc88, 0.7);
     warm.position.set(-3, 2, 2);
@@ -80,6 +81,20 @@ export class SceneManager {
   render(): void {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  setLightweight(enabled: boolean): void {
+    if (enabled) {
+      this.dirLight.shadow.mapSize.set(256, 256);
+      this.dirLight.shadow.map?.dispose();
+      this.dirLight.shadow.map = null;
+      this.renderer.setPixelRatio(1);
+    } else {
+      this.dirLight.shadow.mapSize.set(512, 512);
+      this.dirLight.shadow.map?.dispose();
+      this.dirLight.shadow.map = null;
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
   }
 
   private onResize(container: HTMLElement): void {

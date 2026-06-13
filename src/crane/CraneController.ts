@@ -12,8 +12,8 @@ const ARM_HALF_W = 0.02;
 const CLAW_HALF_W = 0.02;
 const MOVE_SPEED = 0.5;
 
-const CLAMP_MIN = { x: -0.85, y: 0.08, z: -0.85 };
-const CLAMP_MAX = { x: 0.85, y: 1.4, z: 1.3 };
+const CLAMP_MIN = { x: -0.85 * 1.5, y: 0.08, z: -0.85 * 1.5 };
+const CLAMP_MAX = { x: 0.85 * 1.5, y: 1.4, z: 1.3 };
 
 const DROP_POS = { x: 0, z: 1.2 };
 const DROP_DELTA_Y = 0.15;

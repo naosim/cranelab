@@ -14,6 +14,7 @@ export interface SimulationParams {
   collisionLimitForce: number;
   armRotation: number;
   clawFriction: number;
+  lightweight: boolean;
 }
 
 export const defaultParams: SimulationParams = {
@@ -32,4 +33,5 @@ export const defaultParams: SimulationParams = {
   collisionLimitForce: 0.5,
   armRotation: 1,
   clawFriction: 1,
+  lightweight: false,
 };

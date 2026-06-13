@@ -35,6 +35,10 @@ export class PhysicsWorld {
     }
   }
 
+  setSolverIterations(n: number): void {
+    this.world.numSolverIterations = n;
+  }
+
   step(): void {
     this.world.step();
   }

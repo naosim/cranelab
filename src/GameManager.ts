@@ -79,6 +79,10 @@ export class GameManager {
       this.stageManager.updateShieldHeight(p.shieldHeight);
       this.craneController.setParams(p);
       PrizeFactory.updateMass(this.physicsWorld, p.prizeMass);
+      if (typeof p.lightweight === 'boolean') {
+        this.physicsWorld.setSolverIterations(p.lightweight ? 4 : 8);
+        this.sceneManager.setLightweight(p.lightweight);
+      }
     }
     const input = this.inputManager.getState();
     if (input.colliderDebugTrigger) this.colliderDebug.toggle();

@@ -6,9 +6,9 @@ import { SyncSystem } from "./rendering/SyncSystem";
 import { SimulationParams } from "./params/simulationParams";
 import { PrizeFactory } from "./prize/PrizeFactory";
 
-const W = 0.85;
-const D = 0.85;
-const WALL_H = 1.2;
+const W = 0.85 * 1.5;
+const D = 0.85 * 1.5;
+const WALL_H = 1.2 * 1.5;
 const WALL_T = 0.1;
 
 const FLOOR_Y = -0.1;
@@ -216,7 +216,7 @@ export class StageManager {
   ): { shieldBody: RAPIER.RigidBody; shieldMesh: THREE.Mesh; shieldEdge: THREE.Mesh } {
     const sx = W * 2;
     const sy = Math.max(height, 0.01);
-    const sz = WALL_T;
+    const sz = WALL_T * 0.5;
     const px = 0;
     const py = sy / 2;
     const pz = D;
