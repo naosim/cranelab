@@ -17,19 +17,19 @@ export interface SimulationParams {
 }
 
 export const defaultParams: SimulationParams = {
-  shieldHeight: 0.5,
-  closingTorque: 400,
+  shieldHeight: 0.3,
+  closingTorque: 100,
   holdTorque: 100,
   maxOpeningAngle: 1.2,
-  maxCloseAngle: 0,
+  maxCloseAngle: 0.4,
   clawPitch: 0.3,
-  forearmAngle: 0.7,
+  forearmAngle: 1.0,
   upperArmLength: 0.17,
   forearmLength: 0.12,
   clawLength: 0.07,
-  prizeMass: 0.1,
+  prizeMass: 0.4,
   collisionLimitEnabled: true,
   collisionLimitForce: 0.5,
-  armRotation: 0,
+  armRotation: 1,
   clawFriction: 1,
 };

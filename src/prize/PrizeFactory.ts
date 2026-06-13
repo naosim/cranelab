@@ -343,8 +343,11 @@ export class PrizeFactory {
 
     // hexagonal ring of 6 cuboids — horizontal (XZ plane)
     const hexR = 0.05 * S;
-    const halfThick = 0.025;
-    const halfLen = hexR * 0.45;
+    const halfThick = 0.005;
+    const halfLen = hexR * 0.5;
+    const _v3 = new THREE.Vector3();
+    const _q = new THREE.Quaternion();
+    const _xAxis = new THREE.Vector3(1, 0, 0);
     for (let i = 0; i < 6; i++) {
       const phi = i * Math.PI / 3;
       const phiNext = (i + 1) * Math.PI / 3;
@@ -354,11 +357,12 @@ export class PrizeFactory {
       const vzNext = hexR * Math.sin(phiNext);
       const cx = (vx + vxNext) / 2;
       const cz = (vz + vzNext) / 2;
-      const angle = Math.atan2(vzNext - vz, vxNext - vx);
+      const dir = _v3.set(vxNext - vx, 0, vzNext - vz).normalize();
+      _q.setFromUnitVectors(_xAxis, dir);
       physicsWorld.world.createCollider(
         RAPIER.ColliderDesc.cuboid(halfLen, halfThick, halfThick)
           .setTranslation(cx + tagX, tagY, cz + tagZ)
-          .setRotation({ x: 0, y: Math.sin(angle / 2), z: 0, w: Math.cos(angle / 2) })
+          .setRotation({ x: _q.x, y: _q.y, z: _q.z, w: _q.w })
           .setFriction(1.0)
           .setDensity(LO_DENSITY)
           .setCollisionGroups(PRIZE_COLLISION_GROUPS),
