@@ -10,6 +10,7 @@ export interface SimulationParams {
   forearmLength: number;
   clawLength: number;
   prizeMass: number;
+  prizeScale: number;
   collisionLimitEnabled: boolean;
   collisionLimitForce: number;
   armRotation: number;
@@ -29,6 +30,7 @@ export const defaultParams: SimulationParams = {
   forearmLength: 0.12,
   clawLength: 0.07,
   prizeMass: 0.4,
+  prizeScale: 1.0,
   collisionLimitEnabled: true,
   collisionLimitForce: 0.5,
   armRotation: 1,

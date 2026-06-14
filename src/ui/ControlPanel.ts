@@ -22,6 +22,7 @@ const SLIDERS: SliderDef[] = [
   { key: "forearmLength", label: "前腕長さ", min: 0.1, max: 0.5, step: 0.01 },
   { key: "clawLength", label: "手(爪)長さ", min: 0.03, max: 0.15, step: 0.01 },
   { key: "prizeMass", label: "景品 質量", min: 0.01, max: 5.0, step: 0.01 },
+  { key: "prizeScale", label: "景品 スケール", min: 0.1, max: 5.0, step: 0.05 },
   { key: "collisionLimitForce", label: "衝突制限 強さ", min: 0, max: 1.0, step: 0.05 },
   { key: "clawFriction", label: "アーム摩擦", min: 0, max: 2, step: 0.05 },
   { key: "armRotation", label: "アーム回転角(度)", min: 0, max: 90, step: 1 },
@@ -36,9 +37,12 @@ export class ControlPanel {
   private container: HTMLDivElement;
   private bodyEl: HTMLDivElement;
   private toggleBtn: HTMLButtonElement;
+  private modeBtn: HTMLButtonElement;
   private sliders: Map<ParamKey, HTMLInputElement> = new Map();
+  private numberInputs: Map<ParamKey, HTMLInputElement> = new Map();
   private labels: Map<ParamKey, HTMLSpanElement> = new Map();
   private _visible = true;
+  private _directInputMode = false;
 
   constructor(
     private params: SimulationParams,
@@ -57,6 +61,13 @@ export class ControlPanel {
     this.toggleBtn.title = "パラメータ設定を開閉 (P)";
     this.toggleBtn.addEventListener("click", () => this.toggle());
     header.appendChild(this.toggleBtn);
+
+    this.modeBtn = document.createElement("button");
+    this.modeBtn.className = "cp-mode-btn";
+    this.modeBtn.textContent = "数値入力";
+    this.modeBtn.title = "スライダー/数値入力 切替";
+    this.modeBtn.addEventListener("click", () => this.toggleDirectInputMode());
+    header.appendChild(this.modeBtn);
 
     const title = document.createElement("h2");
     title.textContent = "パラメータ設定";
@@ -81,29 +92,55 @@ export class ControlPanel {
 
       const valueSpan = document.createElement("span");
       valueSpan.className = "slider-value";
-      valueSpan.textContent = String(this.params[def.key]);
-      row.appendChild(valueSpan);
-      this.labels.set(def.key, valueSpan);
-
-      const input = document.createElement("input");
-      input.type = "range";
-      input.min = String(def.min);
-      input.max = String(def.max);
-      input.step = String(def.step);
       const isDeg = def.key === "armRotation";
       const rawVal = this.params[def.key] as number;
       const displayVal = isDeg ? rawVal * 180 / Math.PI : rawVal;
-      input.value = String(displayVal);
       valueSpan.textContent = String(displayVal);
-      input.addEventListener("input", () => {
-        const newVal = parseFloat(input.value);
+      row.appendChild(valueSpan);
+      this.labels.set(def.key, valueSpan);
+
+      // スライダー
+      const slider = document.createElement("input");
+      slider.type = "range";
+      slider.min = String(def.min);
+      slider.max = String(def.max);
+      slider.step = String(def.step);
+      slider.value = String(displayVal);
+      slider.className = "cp-slider";
+      slider.addEventListener("input", () => {
+        const newVal = parseFloat(slider.value);
         const storeVal = isDeg ? newVal * Math.PI / 180 : newVal;
         (this.params as unknown as Record<string, number>)[def.key] = storeVal;
         valueSpan.textContent = String(newVal);
+        const numInput = this.numberInputs.get(def.key);
+        if (numInput) numInput.value = String(newVal);
         saveAndNotify({ ...this.params });
       });
-      row.appendChild(input);
-      this.sliders.set(def.key, input);
+      row.appendChild(slider);
+      this.sliders.set(def.key, slider);
+
+      // 数値入力
+      const numInput = document.createElement("input");
+      numInput.type = "number";
+      numInput.min = String(def.min);
+      numInput.max = String(def.max);
+      numInput.step = String(def.step);
+      numInput.value = String(displayVal);
+      numInput.className = "cp-number-input";
+      numInput.style.display = this._directInputMode ? "block" : "none";
+      numInput.addEventListener("change", () => {
+        const newVal = parseFloat(numInput.value);
+        if (isNaN(newVal)) return;
+        const clamped = Math.max(def.min, Math.min(def.max, newVal));
+        const storeVal = isDeg ? clamped * Math.PI / 180 : clamped;
+        (this.params as unknown as Record<string, number>)[def.key] = storeVal;
+        valueSpan.textContent = String(clamped);
+        slider.value = String(clamped);
+        numInput.value = String(clamped);
+        saveAndNotify({ ...this.params });
+      });
+      row.appendChild(numInput);
+      this.numberInputs.set(def.key, numInput);
 
       this.bodyEl.appendChild(row);
     }
@@ -142,6 +179,19 @@ export class ControlPanel {
     window.addEventListener("keydown", (e) => {
       if (e.key.toLowerCase() === "p") this.toggle();
     });
+  }
+
+  private toggleDirectInputMode(): void {
+    this._directInputMode = !this._directInputMode;
+    this.modeBtn.textContent = this._directInputMode ? "スライダー" : "数値入力";
+    this.modeBtn.classList.toggle("active", this._directInputMode);
+    
+    for (const numInput of this.numberInputs.values()) {
+      numInput.style.display = this._directInputMode ? "block" : "none";
+    }
+    for (const slider of this.sliders.values()) {
+      slider.style.display = this._directInputMode ? "none" : "block";
+    }
   }
 
   private toggle(): void {
@@ -217,6 +267,21 @@ export class ControlPanel {
       }
       .cp-body {
         padding: 0 12px 12px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #446 #1a1e2e;
+      }
+      .cp-body::-webkit-scrollbar {
+        width: 6px;
+      }
+      .cp-body::-webkit-scrollbar-track {
+        background: #1a1e2e;
+        border-radius: 3px;
+      }
+      .cp-body::-webkit-scrollbar-thumb {
+        background: #446;
+        border-radius: 3px;
       }
       .cp-body.hidden {
         display: none;

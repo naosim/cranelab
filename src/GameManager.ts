@@ -144,9 +144,9 @@ export class GameManager {
     this.sceneManager.removeMesh("prize_bear");
     const blueprint = getRandomBlueprint();
     if (blueprint) {
-      PrizeFactory.createFromBlueprint(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, blueprint);
+      PrizeFactory.createFromBlueprint(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, blueprint, this.params.prizeScale);
     } else {
-      PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass);
+      PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, this.params.prizeScale);
     }
   }
 
@@ -169,10 +169,14 @@ export class GameManager {
     if (this.pendingParams) {
       const p = this.pendingParams;
       this.pendingParams = null;
+      const prevScale = this.params.prizeScale;
       Object.assign(this.params, p);
       this.stageManager.updateShieldHeight(p.shieldHeight);
       this.craneController.setParams(p);
       PrizeFactory.updateMass(this.physicsWorld, p.prizeMass);
+      if (p.prizeScale !== prevScale) {
+        PrizeFactory.updateScale(this.physicsWorld, this.sceneManager, this.syncSystem, p.prizeScale, p.prizeMass);
+      }
       if (typeof p.lightweight === 'boolean') {
         this.physicsWorld.setSolverIterations(p.lightweight ? 4 : 8);
         this.sceneManager.setLightweight(p.lightweight);

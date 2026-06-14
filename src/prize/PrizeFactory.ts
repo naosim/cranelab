@@ -14,18 +14,22 @@ const GROUP_PRIZE = 1 << 1;
 const PRIZE_COLLISION_GROUPS = (GROUP_ARM << 16) | GROUP_PRIZE;
 
 export class PrizeFactory {
+  static currentBlueprint: PrizeBlueprint | null = null;
+
   static create(
     physicsWorld: PhysicsWorld,
     sceneManager: SceneManager,
     syncSystem: SyncSystem,
     mass: number,
+    prizeScale: number = 1.0,
   ): void {
+    PrizeFactory.currentBlueprint = null;
     const rotY = Math.random() * Math.PI * 2;
-    this.createDog(physicsWorld, sceneManager, syncSystem, mass, rotY);
+    this.createDog(physicsWorld, sceneManager, syncSystem, mass, rotY, prizeScale);
     const body = physicsWorld.getBody("prize_bear")!;
     const pivot = sceneManager.getMesh("prize_bear") as THREE.Group;
     const tagZ = -(0.1 * S + 0.05 * S);
-    this.buildTagOnBody(physicsWorld, body, pivot, 0, 0.03 * S, tagZ, 0);
+    this.buildTagOnBody(physicsWorld, body, pivot, 0, 0.03 * S, tagZ, 0, prizeScale);
   }
 
   static createFromBlueprint(
@@ -34,7 +38,9 @@ export class PrizeFactory {
     syncSystem: SyncSystem,
     mass: number,
     blueprint: PrizeBlueprint,
+    prizeScale: number = 1.0,
   ): void {
+    PrizeFactory.currentBlueprint = blueprint;
     const rotY = Math.random() * Math.PI * 2;
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
@@ -47,8 +53,8 @@ export class PrizeFactory {
 
     for (const part of blueprint.parts) {
       physicsWorld.world.createCollider(
-        RAPIER.ColliderDesc.cuboid(part.hw, part.hh, part.hd)
-          .setTranslation(part.px, part.py, part.pz)
+        RAPIER.ColliderDesc.cuboid(part.hw * prizeScale, part.hh * prizeScale, part.hd * prizeScale)
+          .setTranslation(part.px * prizeScale, part.py * prizeScale, part.pz * prizeScale)
           .setDensity(LO_DENSITY)
           .setFriction(0.6)
           .setCollisionGroups(PRIZE_COLLISION_GROUPS),
@@ -61,6 +67,7 @@ export class PrizeFactory {
     const pivot = new THREE.Group();
     pivot.position.set(0, PIVOT_Y, 0);
     pivot.quaternion.set(q.x, q.y, q.z, q.w);
+    pivot.scale.set(prizeScale, prizeScale, prizeScale);
     sceneManager.addMesh("prize_bear", pivot);
     syncSystem.addPair(body, pivot);
 
@@ -78,7 +85,7 @@ export class PrizeFactory {
 
     const tagCfg = blueprint.tag;
     if (tagCfg?.enabled) {
-      this.buildTagOnBody(physicsWorld, body, pivot, tagCfg.px, tagCfg.py, tagCfg.pz, tagCfg.ry ?? 0);
+      this.buildTagOnBody(physicsWorld, body, pivot, tagCfg.px, tagCfg.py, tagCfg.pz, tagCfg.ry ?? 0, prizeScale);
     }
   }
 
@@ -114,6 +121,7 @@ export class PrizeFactory {
     syncSystem: SyncSystem,
     mass: number,
     rotY: number,
+    prizeScale: number = 1.0,
   ): void {
     const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
@@ -125,19 +133,19 @@ export class PrizeFactory {
     const body = physicsWorld.addBody("prize_bear", bodyDesc);
 
     // body sphere (larger so legs are inside it)
-    physicsWorld.world.createCollider(this.sphereCol(0.1 * S, 0, 0, 0), body);
+    physicsWorld.world.createCollider(this.sphereCol(0.1 * S * prizeScale, 0, 0, 0), body);
     // head sphere at front of body
-    physicsWorld.world.createCollider(this.sphereCol(0.045 * S, 0, 0.02 * S, 0.12 * S), body);
+    physicsWorld.world.createCollider(this.sphereCol(0.045 * S * prizeScale, 0, 0.02 * S * prizeScale, 0.12 * S * prizeScale), body);
 
     // 4 legs — slightly inset from body edge so they appear attached
-    const legY = -(0.1 * S * 0.8 + 0.03 * S);
-    physicsWorld.world.createCollider(this.legCol(-0.04 * S, legY, 0.055 * S), body);
-    physicsWorld.world.createCollider(this.legCol(0.04 * S, legY, 0.055 * S), body);
-    physicsWorld.world.createCollider(this.legCol(-0.04 * S, legY, -0.055 * S), body);
-    physicsWorld.world.createCollider(this.legCol(0.04 * S, legY, -0.055 * S), body);
+    const legY = -(0.1 * S * 0.8 + 0.03 * S) * prizeScale;
+    physicsWorld.world.createCollider(this.legCol(-0.04 * S * prizeScale, legY, 0.055 * S * prizeScale), body);
+    physicsWorld.world.createCollider(this.legCol(0.04 * S * prizeScale, legY, 0.055 * S * prizeScale), body);
+    physicsWorld.world.createCollider(this.legCol(-0.04 * S * prizeScale, legY, -0.055 * S * prizeScale), body);
+    physicsWorld.world.createCollider(this.legCol(0.04 * S * prizeScale, legY, -0.055 * S * prizeScale), body);
 
     // tail
-    physicsWorld.world.createCollider(this.sphereCol(0.012 * S, 0, -0.02 * S, -0.14 * S), body);
+    physicsWorld.world.createCollider(this.sphereCol(0.012 * S * prizeScale, 0, -0.02 * S * prizeScale, -0.14 * S * prizeScale), body);
 
     body.setAdditionalMass(mass, true);
 
@@ -145,6 +153,7 @@ export class PrizeFactory {
     const pivot = new THREE.Group();
     pivot.position.set(0, PIVOT_Y, 0);
     pivot.quaternion.set(q.x, q.y, q.z, q.w);
+    pivot.scale.set(prizeScale, prizeScale, prizeScale);
     sceneManager.addMesh("prize_bear", pivot);
     syncSystem.addPair(body, pivot);
 
@@ -229,9 +238,10 @@ export class PrizeFactory {
     tagPy: number,
     tagPz: number,
     tagRy: number,
+    prizeScale: number = 1.0,
   ): void {
-    const hexR = 0.05 * S;
-    const halfThick = 0.01;
+    const hexR = 0.05 * S * prizeScale;
+    const halfThick = 0.01 * prizeScale;
     const halfLen = hexR * 0.5;
     const _v3 = new THREE.Vector3();
     const _q = new THREE.Quaternion();
@@ -254,7 +264,7 @@ export class PrizeFactory {
       const rQ = new THREE.Quaternion().setFromUnitVectors(_xAxis, rDir);
       physicsWorld.world.createCollider(
         RAPIER.ColliderDesc.cuboid(halfLen, halfThick, halfThick)
-          .setTranslation(rp.x + tagPx, tagPy, rp.z + tagPz)
+          .setTranslation(rp.x + tagPx * prizeScale, tagPy * prizeScale, rp.z + tagPz * prizeScale)
           .setRotation({ x: rQ.x, y: rQ.y, z: rQ.z, w: rQ.w })
           .setFriction(2.0)
           .setDensity(LO_DENSITY)
@@ -283,5 +293,41 @@ export class PrizeFactory {
   static updateMass(physicsWorld: PhysicsWorld, mass: number): void {
     const body = physicsWorld.getBody("prize_bear");
     if (body) body.setAdditionalMass(Math.max(0, mass), true);
+  }
+
+  static updateScale(
+    physicsWorld: PhysicsWorld,
+    sceneManager: SceneManager,
+    syncSystem: SyncSystem,
+    prizeScale: number,
+    prizeMass: number,
+  ): void {
+    const body = physicsWorld.getBody("prize_bear");
+    const pivot = sceneManager.getMesh("prize_bear") as THREE.Group | undefined;
+    if (!body || !pivot) return;
+
+    // Update visual scale (will be replaced but makes change visible same frame)
+    pivot.scale.set(prizeScale, prizeScale, prizeScale);
+
+    const pos = body.translation();
+    const rot = body.rotation();
+
+    syncSystem.removePair(body);
+    physicsWorld.removeBody("prize_bear");
+    sceneManager.removeMesh("prize_bear");
+
+    // Recreate with stored blueprint (same prize shape)
+    if (PrizeFactory.currentBlueprint) {
+      PrizeFactory.createFromBlueprint(physicsWorld, sceneManager, syncSystem, prizeMass, PrizeFactory.currentBlueprint, prizeScale);
+    } else {
+      PrizeFactory.create(physicsWorld, sceneManager, syncSystem, prizeMass, prizeScale);
+    }
+
+    // Restore position and rotation
+    const newBody = physicsWorld.getBody("prize_bear");
+    if (newBody) {
+      newBody.setTranslation(pos, true);
+      newBody.setRotation(rot, true);
+    }
   }
 }
