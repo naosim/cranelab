@@ -21,6 +21,7 @@ export class GameManager {
   colliderDebug: ColliderDebug;
   params: SimulationParams;
   private pendingParams: SimulationParams | null = null;
+  private appliedPrizeScale: number;
   private savedState: { t: { x: number; y: number; z: number }; r: { x: number; y: number; z: number; w: number } } | null = null;
   private coordEl: HTMLDivElement;
   private cameraModeEl: HTMLDivElement | null = null;
@@ -34,6 +35,7 @@ export class GameManager {
     } else {
       this.params = { ...defaultParams };
     }
+    this.appliedPrizeScale = this.params.prizeScale;
     this.physicsWorld = new PhysicsWorld();
     this.sceneManager = new SceneManager(container);
     this.syncSystem = new SyncSystem();
@@ -169,12 +171,12 @@ export class GameManager {
     if (this.pendingParams) {
       const p = this.pendingParams;
       this.pendingParams = null;
-      const prevScale = this.params.prizeScale;
       Object.assign(this.params, p);
       this.stageManager.updateShieldHeight(p.shieldHeight);
       this.craneController.setParams(p);
       PrizeFactory.updateMass(this.physicsWorld, p.prizeMass);
-      if (p.prizeScale !== prevScale) {
+      if (p.prizeScale !== this.appliedPrizeScale) {
+        this.appliedPrizeScale = p.prizeScale;
         PrizeFactory.updateScale(this.physicsWorld, this.sceneManager, this.syncSystem, p.prizeScale, p.prizeMass);
       }
       if (typeof p.lightweight === 'boolean') {

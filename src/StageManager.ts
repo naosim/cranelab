@@ -33,7 +33,7 @@ export class StageManager {
     this.shieldBody = shieldBody;
     this.shieldMesh = shieldMesh;
     this.shieldEdge = shieldEdge;
-    this.buildPrize(physicsWorld, sceneManager, syncSystem, params.prizeMass);
+    this.buildPrize(physicsWorld, sceneManager, syncSystem, params.prizeMass, params.prizeScale);
   }
 
   private addDecoratedBox(
@@ -277,12 +277,13 @@ export class StageManager {
     sceneManager: SceneManager,
     syncSystem: SyncSystem,
     mass: number,
+    prizeScale: number,
   ): void {
     const blueprint = getRandomBlueprint();
     if (blueprint) {
-      PrizeFactory.createFromBlueprint(physicsWorld, sceneManager, syncSystem, mass, blueprint);
+      PrizeFactory.createFromBlueprint(physicsWorld, sceneManager, syncSystem, mass, blueprint, prizeScale);
     } else {
-      PrizeFactory.create(physicsWorld, sceneManager, syncSystem, mass);
+      PrizeFactory.create(physicsWorld, sceneManager, syncSystem, mass, prizeScale);
     }
   }
 }
