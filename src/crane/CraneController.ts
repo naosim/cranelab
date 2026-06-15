@@ -425,7 +425,7 @@ export class CraneController {
   }
 
   private isArmContact(arm: ArmData): boolean {
-    const exempt = new Set(["prize_bear", "crane_head"]);
+    const exempt = new Set(["prize_bear", "crane_head", "wall_back", "wall_left", "wall_right"]);
     let found = false;
     const check = (other: RAPIER.Collider) => {
       if (found) return;
