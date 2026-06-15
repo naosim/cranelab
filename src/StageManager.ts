@@ -282,8 +282,6 @@ export class StageManager {
     const blueprint = getRandomBlueprint();
     if (blueprint) {
       PrizeFactory.createFromBlueprint(physicsWorld, sceneManager, syncSystem, mass, blueprint, prizeScale);
-    } else {
-      PrizeFactory.create(physicsWorld, sceneManager, syncSystem, mass, prizeScale);
     }
   }
 }

@@ -138,23 +138,21 @@ export class GameManager {
 
   private resetPrize(): void {
     this.savedState = null;
-    const oldBody = this.physicsWorld.getBody("prize_bear");
+    const oldBody = this.physicsWorld.getBody("prize");
     if (oldBody) {
       this.syncSystem.removePair(oldBody);
-      this.physicsWorld.removeBody("prize_bear");
+      this.physicsWorld.removeBody("prize");
     }
-    this.sceneManager.removeMesh("prize_bear");
+    this.sceneManager.removeMesh("prize");
     const blueprint = getRandomBlueprint();
     if (blueprint) {
       PrizeFactory.createFromBlueprint(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, blueprint, this.params.prizeScale);
-    } else {
-      PrizeFactory.create(this.physicsWorld, this.sceneManager, this.syncSystem, this.params.prizeMass, this.params.prizeScale);
     }
   }
 
   private revertPrize(): void {
     if (!this.savedState) return;
-    const body = this.physicsWorld.getBody("prize_bear");
+    const body = this.physicsWorld.getBody("prize");
     if (!body) return;
     body.setTranslation(this.savedState.t, true);
     body.setRotation(this.savedState.r, true);
@@ -186,7 +184,7 @@ export class GameManager {
     }
     const input = this.inputManager.getState();
     if (input.actionTrigger) {
-      const body = this.physicsWorld.getBody("prize_bear");
+      const body = this.physicsWorld.getBody("prize");
       if (body) {
         const st = body.translation();
         const sr = body.rotation();
@@ -227,7 +225,7 @@ export class GameManager {
         break;
       }
       case 'prize': {
-        const prize = this.physicsWorld.getBody("prize_bear");
+        const prize = this.physicsWorld.getBody("prize");
         if (prize) {
           const t = prize.translation();
           targetX = t.x; targetY = t.y; targetZ = t.z;

@@ -189,7 +189,7 @@ export class CraneController {
   }
 
   private createDropZoneDetector(physicsWorld: PhysicsWorld): void {
-    const prizeBody = physicsWorld.getBody("prize_bear") || null;
+    const prizeBody = physicsWorld.getBody("prize") || null;
     const detector = new DropZoneDetector(prizeBody);
     this.dropZoneDetectors.push(detector);
   }
@@ -425,7 +425,7 @@ export class CraneController {
   }
 
   private isArmContact(arm: ArmData): boolean {
-    const exempt = new Set(["prize_bear", "crane_head", "wall_back", "wall_left", "wall_right"]);
+    const exempt = new Set(["prize", "crane_head", "wall_back", "wall_left", "wall_right"]);
     let found = false;
     const check = (other: RAPIER.Collider) => {
       if (found) return;
@@ -513,7 +513,7 @@ export class CraneController {
     }
 
     {
-      const prizeBody = this.physicsWorld.getBody("prize_bear");
+      const prizeBody = this.physicsWorld.getBody("prize");
       if (prizeBody) {
         const pos = prizeBody.translation();
         if (this.debugLogTimer > 0) {
@@ -652,7 +652,7 @@ export class CraneController {
       case AutoState.OPENING:
         if (this.autoTimer === 0) {
           this.debugLogTimer = 3;
-          const pb = this.physicsWorld.getBody("prize_bear");
+          const pb = this.physicsWorld.getBody("prize");
           this.openingPrizeY = pb ? pb.translation().y : 0;
         }
         this.autoTimer += dt;
