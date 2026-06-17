@@ -25,6 +25,9 @@ export class InputManager {
         this._clawPressed = true;
         e.preventDefault();
       }
+      if (e.code === "Enter") {
+        this._actionTrigger = true;
+      }
     });
     window.addEventListener("keyup", (e) => {
       const key = e.key.toLowerCase();

@@ -83,8 +83,8 @@ export class PrizeFactory {
     prizeScale: number = 1.0,
   ): void {
     const hexR = 0.1 * prizeScale;
-    const halfThick = 0.01 * prizeScale;
-    const halfLen = hexR * 0.5;
+    const halfThick = 0.02 * prizeScale;
+    const halfLen = hexR * 0.6;
     const _v3 = new THREE.Vector3();
     const _q = new THREE.Quaternion();
     const _xAxis = new THREE.Vector3(1, 0, 0);

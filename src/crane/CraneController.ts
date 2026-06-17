@@ -253,9 +253,10 @@ export class CraneController {
     );
 
     // claw collider (cuboid matching visual, repositioned/rotated in update)
+    // extended upward to overlap forearm → prevents prize slipping through wrist gap
     const clawC = physicsWorld.world.createCollider(
-      RAPIER.ColliderDesc.cuboid(CLAW_HALF_W, cl, CLAW_HALF_W)
-        .setTranslation(0, -(ul * 2 + fl * 2 + cl), 0)
+      RAPIER.ColliderDesc.cuboid(CLAW_HALF_W, cl * 1.3, CLAW_HALF_W)
+        .setTranslation(0, -(ul * 2 + fl * 2 + cl * 0.7), 0)
         .setFriction(this.clawFriction)
         .setCollisionGroups(ARM_COLLISION_GROUPS),
       body,
@@ -342,8 +343,8 @@ export class CraneController {
       arm.body,
     );
     arm.clawCollider = this.physicsWorld.world.createCollider(
-      RAPIER.ColliderDesc.cuboid(CLAW_HALF_W, cl, CLAW_HALF_W)
-        .setTranslation(0, -(ul * 2 + fl * 2 + cl), 0)
+      RAPIER.ColliderDesc.cuboid(CLAW_HALF_W, cl * 1.3, CLAW_HALF_W)
+        .setTranslation(0, -(ul * 2 + fl * 2 + cl * 0.7), 0)
         .setFriction(this.clawFriction)
         .setCollisionGroups(ARM_COLLISION_GROUPS),
       arm.body,
